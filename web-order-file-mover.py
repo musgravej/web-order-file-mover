@@ -1,6 +1,7 @@
 import os
 import datetime
 import PyPDF2
+import re
 
 class Globals:
     def __init__(self):
