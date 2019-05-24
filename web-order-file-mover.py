@@ -1,4 +1,10 @@
 import os
+import datetime
+
+
+class Globals:
+    def __init__(self):
+        pass
 
 
 def main():
