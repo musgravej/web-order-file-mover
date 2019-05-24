@@ -1,0 +1,36 @@
+// for email
+
+20403: Wellmark
+19404: Farm Bureau
+23396: Medica
+18241: Lite Portal, need to read the order to pick the name
+
+Open file, read number of pages, commit to email text
+Look for files dated previous day
+
+// for file mover
+
+From P:\Job Ticket Feed docs\WebToPrint
+
+
+FB*.pdf
+	move files into I:\Customer Files\In Progress\FB Monthly Web Order\[job number]
+	job number for the file creation date
+
+WAG*.pdf
+	move files into I:\Customer Files\In Progress\Willis Auto Web Orders\[job number]
+	job number for the file creation date
+
+MMH*.pdf
+	move files into I:\Customer Files\In Progress\Medica Monthly Web Orders\[job number]
+	job number for the file creation date
+
+
+manage monthly job numbers with .ini file
+
+Use file creation date as choice for processing files
+
+Run files dated from previous day
+On Mondays, look for files created previous Fri - Sun
+On Tuesday, look for file created on Monday (previous day)
+...etc
