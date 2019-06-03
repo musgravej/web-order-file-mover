@@ -34,3 +34,15 @@ Run files dated from previous day
 On Mondays, look for files created previous Fri - Sun
 On Tuesday, look for file created on Monday (previous day)
 ...etc
+
+
+
+Saved script
+//
+# file_list = [f for f in os.listdir(self.processing_directory)]
+        #
+        # self.art_files = set([f for f in file_list
+        #                      if datetime.datetime.strftime(datetime.datetime.fromtimestamp(
+        #                       os.path.getmtime(os.path.join(self.processing_directory, f))), "%Y%m%d") ==
+        #                       self.process_date_str])
+//
