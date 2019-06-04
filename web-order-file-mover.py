@@ -1,3 +1,4 @@
+import sys
 import os
 import datetime
 import PyPDF2
@@ -15,15 +16,25 @@ class Globals:
         self.report_files = set()
         self.art_files = set()
         self.dated_files = set()
-        self.processing_directory = os.path.join("\\\\JTSRV3", "Print Facility", "Job Ticket Feed docs",
-                                                 "WebToPrint")
+        # self.processing_directory = os.path.join("\\\\JTSRV3", "Print Facility", "Job Ticket Feed docs",
+        #                                          "WebToPrint")
+
+        self.processing_directory = os.path.join(os.curdir, "webtoprint")
+
         self.count_art_files = 1
 
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
 
+    def get_art_files(self):
+        """Sets self.art_files to a set of artwork files for processing date"""
+        print("Making list of art files")
+        self.art_files = self.dated_files
+        self.art_files.difference_update(self.report_files)
+
     def get_report_files(self):
         """Sets self.report_files to a set of packing slips, work orders, daily reports for processing date"""
+        print("Making list of report files")
         srch = re.compile("[\w]*[\d]{8}.pdf")
         self.report_files = set((list(filter(srch.match, self.dated_files))))
 
@@ -38,17 +49,74 @@ class Globals:
                                  os.path.getmtime(os.path.join(self.processing_directory, f))), "%Y%m%d") ==
                                 self.process_date_str])
 
-    def get_art_files(self):
-        """Sets self.art_files to a set of artwork files for processing date"""
-        self.art_files = self.dated_files
-        self.art_files.difference_update(self.report_files)
+    def get_report_counts(self):
+        wo_srch = re.compile("[\d]*_WO_[\d]*.pdf")
+        kit_srch = re.compile("[\d]*_WO_split_[\d]*.pdf")
+
+        work_orders = set((list(filter(wo_srch.match, self.report_files))))
+        kit_orders = set((list(filter(kit_srch.match, self.report_files))))
+
+        count_string = ""
+
+        print("Getting order counts")
+
+        for order in work_orders:
+            if order[:5] == '20403':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Wellmark: {}\r\n".format(cnt)
+
+            if order[:5] == '19404':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Farm Bureau: {}\r\n".format(cnt)
+
+            if order[:5] == '23396':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Medica: {}\r\n".format(cnt)
+
+            if order[:5] == '18241':
+                cnt = self.lite_portal_counts(os.path.join(self.processing_directory, order))
+                count_string += cnt
+
+        for order in kit_orders:
+            if order[:5] == '20403':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Wellmark Kits: {}\r\n".format(cnt)
+
+            if order[:5] == '19404':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Farm Bureau Kits: {}\r\n".format(cnt)
+
+            if order[:5] == '23396':
+                cnt = self.count_pdf_pages(os.path.join(self.processing_directory, order))
+                count_string += "Medica Kits: {}\r\n".format(cnt)
+
+        pyperclip.copy(count_string)
+
+    def count_pdf_pages(self, pdf_path):
+        """Counts the number of pages in pdf_path (full pdf path and file name)"""
+        pdf = PyPDF2.PdfFileReader(pdf_path)
+        return pdf.getNumPages()
+
+    def lite_portal_counts(self, pdf_path):
+        """Reads pdf, gets portal counts, returns string of portal counts"""
+        pdf = PyPDF2.PdfFileReader(pdf_path)
+        portal_counts = dict()
+        count_string = ""
+        for page in range(pdf.getNumPages()):
+            portal = pdf.getPage(page).extractText().split('\n')[0]
+            portal_counts[portal] = portal_counts.get(portal, 0) + 1
+
+        for key, value in portal_counts.items():
+            count_string += "{0}: {1}\r\n".format(key, value)
+
+        return count_string
 
     def move_farm_bureau_art(self):
-        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-        #                         "In Progress", "01-Web Order Art", "FB Monthly Web Order")
-
         savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-                                "In Progress", "01-Web Order Art", "FB Monthly Web Order TEST")
+                                "In Progress", "01-Web Order Art", "FB Monthly Web Order")
+
+        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
+        #                         "In Progress", "01-Web Order Art", "FB Monthly Web Order TEST")
 
         file_search = re.compile("FB[\s\S]*.pdf")
         file_match = (list(filter(file_search.match, self.art_files)))
@@ -62,18 +130,17 @@ class Globals:
                     return
 
                 for n, f in enumerate(file_match):
-                    # print(os.path.join(savepath, job_directory[0]), f)
                     self.move_file_and_split(f, os.path.join(savepath, job_directory[0]))
 
             except KeyError:
                 print("No job number assigned to date search.  Edit config.ini file.")
 
     def move_willis_art(self):
-        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-        #                         "In Progress", "01-Web Order Art", "Willis Auto Web Orders")
-
         savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-                                "In Progress", "01-Web Order Art", "Willis Auto Web Orders TEST")
+                                "In Progress", "01-Web Order Art", "Willis Auto Web Orders")
+
+        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
+        #                         "In Progress", "01-Web Order Art", "Willis Auto Web Orders TEST")
 
         file_search = re.compile("WAG[\s\S]*.pdf")
         file_match = (list(filter(file_search.match, self.art_files)))
@@ -88,17 +155,16 @@ class Globals:
                     return
 
                 for n, f in enumerate(file_match):
-                #     # print(os.path.join(savepath, job_directory[0]), f)
                     self.move_file_and_split(f, os.path.join(savepath, job_directory[0]))
 
             except KeyError:
                 print("No job number assigned to date search.  Edit config.ini file.")
 
     def move_medica_art(self):
-        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-        #                         "In Progress", "01-Web Order Art", "Medica Monthly Web Orders")
         savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
-                                "In Progress", "01-Web Order Art", "Medica Monthly Web Orders TEST")
+                                "In Progress", "01-Web Order Art", "Medica Monthly Web Orders")
+        # savepath = os.path.join("\\\\JTSRV4", "Data", "Customer Files",
+        #                         "In Progress", "01-Web Order Art", "Medica Monthly Web Orders TEST")
 
         file_search = re.compile("MMH[\s\S]*.pdf")
         file_match = (list(filter(file_search.match, self.art_files)))
@@ -113,7 +179,6 @@ class Globals:
                     return
 
                 for n, f in enumerate(file_match):
-                    #     # print(os.path.join(savepath, job_directory[0]), f)
                     self.move_file_and_split(f, os.path.join(savepath, job_directory[0]))
 
             except KeyError:
@@ -149,8 +214,14 @@ class Globals:
 
 
 def main():
+    if not os.path.isfile('config.ini'):
+        print("Error: No config.ini file")
+        time.sleep(2)
+        sys.exit()
+
     g = Globals()
     g.process_date_str = input("Processing date (YYYYMMDD): ")
+    # g.process_date_str = "20190524"
     g.process_date_files()
     g.get_report_files()
     g.get_art_files()
@@ -158,8 +229,9 @@ def main():
     g.move_farm_bureau_art()
     g.move_willis_art()
     g.move_medica_art()
+    g.get_report_counts()
 
-    print("File move complete!")
+    print("File move complete!  Report counts copied to clipboard.")
     time.sleep(2)
 
 
