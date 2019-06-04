@@ -11,6 +11,7 @@ Look for files dated previous day
 // for file mover
 
 From P:\Job Ticket Feed docs\WebToPrint
+\\\\jtsrv3\Print Facility\Job Ticket Feed docs\WebToPrint
 
 
 FB*.pdf

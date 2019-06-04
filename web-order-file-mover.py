@@ -16,10 +16,10 @@ class Globals:
         self.report_files = set()
         self.art_files = set()
         self.dated_files = set()
-        # self.processing_directory = os.path.join("\\\\JTSRV3", "Print Facility", "Job Ticket Feed docs",
-        #                                          "WebToPrint")
+        self.processing_directory = os.path.join("\\\\JTSRV3", "Print Facility", "Job Ticket Feed docs",
+                                                 "WebToPrint")
 
-        self.processing_directory = os.path.join(os.curdir, "webtoprint")
+        # self.processing_directory = os.path.join(os.curdir, "webtoprint")
 
         self.count_art_files = 1
 
@@ -91,6 +91,9 @@ class Globals:
                 count_string += "Medica Kits: {}\r\n".format(cnt)
 
         pyperclip.copy(count_string)
+
+        with open('counts.txt', 'w+') as s:
+            s.write("Counts for {0}\r\n\r\n{1}".format(self.process_date_str, count_string))
 
     def count_pdf_pages(self, pdf_path):
         """Counts the number of pages in pdf_path (full pdf path and file name)"""
@@ -231,7 +234,7 @@ def main():
     g.move_medica_art()
     g.get_report_counts()
 
-    print("File move complete!  Report counts copied to clipboard.")
+    print("File move complete!  Report counts copied to clipboard, and written to counts.txt")
     time.sleep(2)
 
 
